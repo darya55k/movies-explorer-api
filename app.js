@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const NotFoundError = require('./errors/not-found-err');
 const limiter = require('./middlewares/rate-limiter');
+const router = require('./routes');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(requestLogger);
 
 app.use(limiter);
 app.use(errorLogger);
+app.use(router);
 
 app.use(errors());
 
