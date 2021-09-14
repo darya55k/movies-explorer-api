@@ -6,7 +6,8 @@ const helmet = require('helmet');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const NotFoundError = require('./errors/not-found-err');
 const limiter = require('./middlewares/rate-limiter');
-const router = require('./routes');
+const router = require('./routes/index');
+const errorHandler = require('./middlewares/error-handler');
 
 const app = express();
 
@@ -27,22 +28,18 @@ mongoose.connect(NODE_ENV === 'production' ? DATA_BASE : 'mongodb://localhost:27
 app.use(requestLogger);
 
 app.use(limiter);
-app.use(errorLogger);
-app.use(router);
 
-app.use(errors());
+app.use(router);
 
 app.use('*', () => {
   throw new NotFoundError('Запрашиваемый ресурс не найден');
 });
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
+app.use(errorLogger);
 
-  res.status(statusCode).json({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
+app.use(errors());
 
-  next();
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

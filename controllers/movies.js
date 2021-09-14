@@ -2,6 +2,7 @@ const Movie = require('../models/movie');
 const BadRequestErr = require('../errors/bad-request-err');
 const NotFoundError = require('../errors/not-found-err');
 const ForbiddenErr = require('../errors/forbidden-err');
+const UnauthorizedErr = require('../errors/unauthorized-err');
 const { invalidDataErrorText, movieIdNotFoundErrorText, forbiddenErrorText } = require('../errors/error-texts');
 
 module.exports.getMovies = (req, res, next) => {
@@ -66,7 +67,12 @@ module.exports.deleteMovieById = (req, res, next) => {
       }
 
       Movie.findByIdAndDelete(req.params.movieId).select('-owner')
-        .then((deletedMovie) => res.status(200).send(deletedMovie));
+        .then((deletedMovie) => res.status(200).send(deletedMovie))
+        .catch(next);
+    }).catch((err) => {
+      if (err.name === 'CastError') {
+        throw new UnauthorizedErr('Невалидный id');
+      } else next(err);
     })
     .catch(next);
 };
